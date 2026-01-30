@@ -3,7 +3,9 @@ public enum ZoneType
     Deck,
     Hand,
     Stage,
-    WaitingRoom,
-    Memory,
-    ResolutionQueue
+    Archive,
+    CheerDeck,
+    ResolutionZone,
+    HoloPowerArea,
+    LifeArea
 }

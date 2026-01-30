@@ -1,27 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class ZoneInstance
 {
     public ZoneType Type { get; }
-    public IReadOnlyList<CardInstance> Cards => _cards.AsReadOnly();
+    public IReadOnlyList<CardInstance> Cards { get; }
     
-    private readonly List<CardInstance> _cards;
     
-    public ZoneInstance(ZoneType type)
+    public ZoneInstance(ZoneType type, IEnumerable<CardInstance> cards = null)
     {
         Type = type;
-        _cards = new List<CardInstance>();
+        Cards = cards?.ToList().AsReadOnly() ?? new List<CardInstance>().AsReadOnly();
     }
     
-    public void AddCard(CardInstance card)
+    public ZoneInstance WithCardAdded(CardInstance card)
     {
-        if (card == null) throw new ArgumentNullException(nameof(card));
-        _cards.Add(card);
+        var newCards = new List<CardInstance>(Cards) { card };
+        return new ZoneInstance(Type, newCards);
     }
     
-    public bool RemoveCard(CardInstance card)
+    public ZoneInstance WithCardRemoved(CardInstance card)
     {
-        return _cards.Remove(card);
+        var newCards = Cards.Where(c => c.Id != card.Id).ToList();
+        return new ZoneInstance(Type, newCards);
     }
 }

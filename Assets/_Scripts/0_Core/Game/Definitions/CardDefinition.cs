@@ -1,3 +1,5 @@
+using System;
+
 public class CardDefinition
 {
     public string Id { get; }

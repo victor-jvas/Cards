@@ -1,3 +1,5 @@
+using System;
+
 public class CardInstance
 {
     public int Id { get; }
