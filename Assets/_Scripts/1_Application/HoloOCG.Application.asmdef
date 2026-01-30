@@ -1,0 +1,16 @@
+{
+    "name": "HoloOCG.Application",
+    "rootNamespace": "",
+    "references": [
+        "GUID:77008c53953fb4548a55919e9d019fe9"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,16 @@
+{
+    "name": "HoloOCG.Adapter",
+    "rootNamespace": "",
+    "references": [
+        "GUID:02bee3907d4cf094fae0046e94dd6e7a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

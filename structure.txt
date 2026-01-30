@@ -1,0 +1,90 @@
+Assets/
+├── Scripts/
+│   ├── 0_Core/                           # [Assembly: Core] – Pure C# (NO Unity)
+│   │   ├── Game/
+│   │   │   ├── Definitions/              # Immutable game data
+│   │   │   │   ├── CardDefinition.cs
+│   │   │   │   ├── AbilityDefinition.cs
+│   │   │   │   └── ZoneDefinition.cs
+│   │   │   │
+│   │   │   ├── Instances/                # Runtime stateful objects
+│   │   │   │   ├── CardInstance.cs
+│   │   │   │   ├── PlayerInstance.cs
+│   │   │   │   └── ZoneInstance.cs
+│   │   │   │
+│   │   │   ├── State/
+│   │   │   │   ├── GameState.cs
+│   │   │   │   └── PlayerState.cs
+│   │   │   │
+│   │   │   ├── Events/
+│   │   │   │   ├── IGameEvent.cs
+│   │   │   │   ├── CardEvent.cs
+│   │   │   │   ├── DamageEvent.cs
+│   │   │   │   ├── ZoneChangeEvent.cs
+│   │   │   │   └── DrawEvent.cs
+│   │   │   │
+│   │   │   ├── Effects/
+│   │   │   │   ├── IEffect.cs
+│   │   │   │   ├── OneShotEffect.cs
+│   │   │   │   ├── ContinuousEffect.cs
+│   │   │   │   └── ReplacementEffect.cs
+│   │   │   │
+│   │   │   ├── Triggers/
+│   │   │   │   ├── TriggerCondition.cs
+│   │   │   │   └── TriggeredAbility.cs
+│   │   │   │
+│   │   │   ├── Rules/
+│   │   │   │   ├── IRule.cs
+│   │   │   │   ├── PhaseRules.cs
+│   │   │   │   ├── StateBasedRules.cs
+│   │   │   │   └── ReplacementRules.cs
+│   │   │   │
+│   │   │   ├── Engines/
+│   │   │   │   ├── RulesEngine.cs
+│   │   │   │   ├── CheckTimingEngine.cs
+│   │   │   │   ├── ReplacementEngine.cs
+│   │   │   │   ├── EffectResolver.cs
+│   │   │   │   ├── TriggerEngine.cs
+│   │   │   │   └── ContinuousEffectEngine.cs
+│   │   │
+│   │   └── Utilities/
+│   │       └── IdGenerator.cs
+│   │
+│   ├── 1_Application/                    # [Assembly: Application]
+│   │   ├── Commands/
+│   │   │   ├── ICommand.cs
+│   │   │   ├── PlayCardCommand.cs
+│   │   │   ├── ActivateAbilityCommand.cs
+│   │   │   └── CommandBus.cs
+│   │   │
+│   │   ├── UseCases/
+│   │   │   ├── StartGameUseCase.cs
+│   │   │   ├── ProcessTurnUseCase.cs
+│   │   │   └── ResolveCommandUseCase.cs
+│   │   │
+│   │   └── Services/
+│   │       ├── GameOrchestrator.cs
+│   │       └── TurnService.cs
+│   │
+│   ├── 2_Adapter/                        # [Assembly: Adapter]
+│   │   ├── Networking/
+│   │   │   ├── NetworkGameAdapter.cs
+│   │   │   ├── ServerCommandReceiver.cs
+│   │   │   └── ClientStateBroadcaster.cs
+│   │   │
+│   │   ├── Input/
+│   │   │   └── InputToCommandAdapter.cs
+│   │   │
+│   │   └── Serialization/
+│   │       ├── CardDTO.cs
+│   │       └── GameStateDTO.cs
+│   │
+│   ├── 3_View/                           # [Assembly: View]
+│   │   ├── UI/
+│   │   ├── Components/
+│   │   └── Managers/
+│   │
+│   └── Tests/
+│       ├── Core.Tests/
+│       ├── Application.Tests/
+│       └── Integration.Tests/
