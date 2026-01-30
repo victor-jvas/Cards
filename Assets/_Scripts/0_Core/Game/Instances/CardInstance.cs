@@ -3,13 +3,15 @@ using System;
 public class CardInstance
 {
     public int Id { get; }
-    public string Name { get; }
+    public int OwnerPlayerId { get; }
     public CardDefinition Definition { get; }
-    
-    public CardInstance(int id, string name, CardDefinition definition)
+
+    public string Name => Definition != null ? Definition.Name : "<Missing CardDefinition>";
+
+    public CardInstance(int id, int ownerPlayerId, CardDefinition definition)
     {
         Id = id;
-        Name = name ?? throw new ArgumentNullException(nameof(name));
+        OwnerPlayerId = ownerPlayerId;
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
     }
 }

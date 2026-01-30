@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 public class GameStateSnapshot
 {
@@ -7,7 +8,7 @@ public class GameStateSnapshot
     public Phase CurrentPhase { get; }
     public int ActivePlayerId { get; }
     public IReadOnlyDictionary<int, PlayerInstance> Players { get; }
-    public IReadOnlyDictionary<ZoneType, ZoneInstance> Zones { get; }
+    public ImmutableDictionary<ZoneId, ZoneInstance> Zones { get; }
     public IReadOnlyList<IGameEvent> PendingEvents { get; }
     
     public GameStateSnapshot(
@@ -15,7 +16,7 @@ public class GameStateSnapshot
         Phase currentPhase,
         int activePlayerId,
         IReadOnlyDictionary<int, PlayerInstance> players,
-        IReadOnlyDictionary<ZoneType, ZoneInstance> zones,
+        ImmutableDictionary<ZoneId, ZoneInstance> zones,
         IReadOnlyList<IGameEvent> pendingEvents)
     {
         TurnNumber = turnNumber;

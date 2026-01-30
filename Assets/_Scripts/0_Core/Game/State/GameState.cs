@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections.Immutable;
 
-public sealed class GameState
+public sealed partial class GameState
 {
     public int TurnNumber { get; }
     public Phase CurrentPhase { get; }
     public int ActivePlayerId { get; }
-    
+
     public ImmutableDictionary<int, PlayerInstance> Players { get; }
-    public ImmutableDictionary<ZoneType, ZoneInstance> Zones { get; }
+    public ImmutableDictionary<ZoneId, ZoneInstance> Zones { get; }
     public ImmutableList<IGameEvent> PendingEvents { get; }
-    
+
     // Cache for performance
     private readonly Lazy<GameStateSnapshot> _stateSnapshot;
 
@@ -21,7 +21,7 @@ public sealed class GameState
         Phase currentPhase,
         int activePlayerId,
         ImmutableDictionary<int, PlayerInstance> players,
-        ImmutableDictionary<ZoneType, ZoneInstance> zones,
+        ImmutableDictionary<ZoneId, ZoneInstance> zones,
         ImmutableList<IGameEvent> pendingEvents)
     {
         TurnNumber = turnNumber;
@@ -30,7 +30,7 @@ public sealed class GameState
         Players = players ?? throw new ArgumentNullException(nameof(players));
         Zones = zones ?? throw new ArgumentNullException(nameof(zones));
         PendingEvents = pendingEvents ?? throw new ArgumentNullException(nameof(pendingEvents));
-        
+
         _stateSnapshot = new Lazy<GameStateSnapshot>(() =>
             new GameStateSnapshot(
                 turnNumber,
@@ -43,27 +43,31 @@ public sealed class GameState
 
     public static GameState CreateInitialState(int startingPlayerId, params PlayerInstance[] players)
     {
-        if (players == null || players.Length == 0) 
+        if (players == null || players.Length == 0)
             throw new ArgumentException("At least one player is required", nameof(players));
-        
+
         var playersDict = players.ToImmutableDictionary(p => p.Id, p => p);
-        
-        var zones = ImmutableDictionary<ZoneType, ZoneInstance>.Empty
-            .Add(ZoneType.Deck, new ZoneInstance(ZoneType.Deck))
-            .Add(ZoneType.Hand, new ZoneInstance(ZoneType.Hand))
-            .Add(ZoneType.Stage, new ZoneInstance(ZoneType.Stage))
-            .Add(ZoneType.Archive, new ZoneInstance(ZoneType.Archive))
-            .Add(ZoneType.CheerDeck, new ZoneInstance(ZoneType.CheerDeck))
-            .Add(ZoneType.ResolutionZone, new ZoneInstance(ZoneType.ResolutionZone))
-            .Add(ZoneType.HoloPowerArea, new ZoneInstance(ZoneType.HoloPowerArea))
-            .Add(ZoneType.LifeArea, new ZoneInstance(ZoneType.LifeArea));
+
+        var zonesBuilder = ImmutableDictionary.CreateBuilder<ZoneId, ZoneInstance>();
+
+        foreach (var player in players)
+        {
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.Deck), new ZoneInstance(player.Id, ZoneType.Deck));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.Hand), new ZoneInstance(player.Id, ZoneType.Hand));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.Stage), new ZoneInstance(player.Id, ZoneType.Stage));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.Archive), new ZoneInstance(player.Id, ZoneType.Archive));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.CheerDeck), new ZoneInstance(player.Id, ZoneType.CheerDeck));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.ResolutionZone), new ZoneInstance(player.Id, ZoneType.ResolutionZone));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.HoloPowerArea), new ZoneInstance(player.Id, ZoneType.HoloPowerArea));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.LifeArea), new ZoneInstance(player.Id, ZoneType.LifeArea));
+        }
 
         return new GameState(
             turnNumber: 1,
             currentPhase: Phase.StartPhase,
             activePlayerId: startingPlayerId,
             players: playersDict,
-            zones: zones,
+            zones: zonesBuilder.ToImmutable(),
             pendingEvents: ImmutableList<IGameEvent>.Empty);
     }
 
@@ -83,19 +87,18 @@ public sealed class GameState
     public GameState WithPlayer(int playerId, PlayerInstance player)
     {
         var newPlayers = Players.SetItem(playerId, player);
-
         if (newPlayers == Players) return this;
 
         return new GameState(
             turnNumber: TurnNumber,
             currentPhase: CurrentPhase,
-            activePlayerId: playerId,
+            activePlayerId: ActivePlayerId,
             players: newPlayers,
             zones: Zones,
             pendingEvents: PendingEvents);
     }
 
-public GameState WithCurrentPhase(Phase newCurrentPhase)
+    public GameState WithCurrentPhase(Phase newCurrentPhase)
     {
         if (newCurrentPhase == CurrentPhase) return this;
 
@@ -121,13 +124,13 @@ public GameState WithCurrentPhase(Phase newCurrentPhase)
             pendingEvents: PendingEvents);
     }
 
-    public GameState WithZone(ZoneType zoneType, ZoneInstance zone)
+    public GameState WithZone(int playerId, ZoneType zoneType, ZoneInstance zone)
     {
         if (zone == null) throw new ArgumentNullException(nameof(zone));
-        
-        var newZones = Zones.SetItem(zoneType, zone);
-        
-        if (newZones == Zones) return this; // Reference equality check
+
+        var key = new ZoneId(playerId, zoneType);
+        var newZones = Zones.SetItem(key, zone);
+        if (newZones == Zones) return this;
 
         return new GameState(
             turnNumber: TurnNumber,
@@ -137,30 +140,33 @@ public GameState WithCurrentPhase(Phase newCurrentPhase)
             zones: newZones,
             pendingEvents: PendingEvents);
     }
-    
-    public GameState WithCardMoved(ZoneType fromZone, ZoneType toZone, CardInstance card)
+
+    /*public GameState WithCardMoved(int playerId, ZoneType fromZone, ZoneType toZone, CardInstance card)
     {
-        // Create new fromZone without the card
-        var fromZoneInstance = Zones[fromZone];
+        if (card == null) throw new ArgumentNullException(nameof(card));
+
+        var fromKey = new ZoneId(playerId, fromZone);
+        var toKey = new ZoneId(playerId, toZone);
+
+        var fromZoneInstance = Zones[fromKey];
         var newFromZone = fromZoneInstance.WithCardRemoved(card);
-    
-        // Create new toZone with the card
-        var toZoneInstance = Zones[toZone];
-        var newToZone = toZoneInstance.WithCardAdded(card);
-        
-        var newZones = Zones.SetItem(fromZone, newFromZone).SetItem(toZone, newToZone);
-    
+
+        var toZoneInstance = Zones[toKey];
+        var newToZone = toZoneInstance.WithCardAddedToTop(card);
+
+        var newZones = Zones.SetItem(fromKey, newFromZone).SetItem(toKey, newToZone);
+
         return new GameState(
             TurnNumber, CurrentPhase, ActivePlayerId,
             Players, newZones, PendingEvents);
-    }
+    }*/
 
     public GameState WithEventAdded(IGameEvent gameEvent)
     {
         if (gameEvent == null) throw new ArgumentNullException(nameof(gameEvent));
-        
+
         var newEvents = PendingEvents.Add(gameEvent);
-        
+
         return new GameState(
             turnNumber: TurnNumber,
             currentPhase: CurrentPhase,
