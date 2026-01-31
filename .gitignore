@@ -92,6 +92,13 @@ fabric.properties
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 
+# Unity Project Settings
+/ProjectSettings/
+/ProjectSettings/*.asset
+
+# Packed Addressables
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 /[Mm]emoryCaptures/
@@ -181,3 +188,7 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/windows,unity,rider
 .aider*
 .env
+
+# NuGet packages
+*.nupkg
+packages/*.nupkg

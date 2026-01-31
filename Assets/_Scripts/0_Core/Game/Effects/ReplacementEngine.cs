@@ -54,43 +54,58 @@ public sealed class ReplacementEngine
             if (!_enabledCategories.Contains(currentReplaceable.Category))
                 break;
 
-            var applicable = _effects
-                .Where(e => !appliedKeys.Contains(e.Key))
+            var applicableAll = _effects
+                .Where(e => !appliedKeys.Contains(e.Key))            // 10.11.3: only once per event
                 .Where(e => e.AppliesTo(state, current))
                 .ToList();
 
-            if (applicable.Count == 0)
+            if (applicableAll.Count == 0)
                 break;
 
-            var controllers = applicable
-                .Select(e => e.GetOrderingControllerPlayerId(state, current))
-                .Where(id => id.HasValue)
-                .Select(id => id.Value)
-                .Distinct()
-                .ToList();
+            // Resolve controller ordering deterministically:
+            // - effect may specify a controller (10.11.2)
+            // - otherwise treat as active player for ordering purposes
+            var controllerOrder = GetControllerOrder(state);
 
-            var controllerPlayerId = controllers.Count == 1 ? controllers[0] : state.ActivePlayerId;
+            ReplacementEffect chosen = null;
+            int chosenControllerId = state.ActivePlayerId;
 
-            ReplacementEffect chosen;
-            if (choose != null)
+            foreach (var controllerId in controllerOrder)
             {
-                var decision = choose(controllerPlayerId, current, applicable);
-                if (decision == null || decision.Effect == null)
-                    break;
+                var applicableForController = applicableAll
+                    .Where(e => (e.GetOrderingControllerPlayerId(state, current) ?? state.ActivePlayerId) == controllerId)
+                    .ToList();
 
-                chosen = decision.Effect;
+                if (applicableForController.Count == 0)
+                    continue;
+
+                chosenControllerId = controllerId;
+
+                if (choose != null)
+                {
+                    var decision = choose(controllerId, current, applicableForController);
+                    if (decision == null || decision.Effect == null)
+                        return new ReplacementResult(originalEvent, current, appliedKeys);
+
+                    chosen = decision.Effect;
+                }
+                else
+                {
+                    chosen = applicableForController
+                        .OrderByDescending(e => e.Priority)
+                        .ThenBy(e => e.Key, StringComparer.Ordinal)
+                        .First();
+                }
+
+                break;
             }
-            else
-            {
-                chosen = applicable
-                    .OrderByDescending(e => e.Priority)
-                    .ThenBy(e => e.Key, StringComparer.Ordinal)
-                    .First();
-            }
+
+            if (chosen == null)
+                break;
 
             if (chosen.IsOptional)
             {
-                var shouldApply = applyOptional?.Invoke(controllerPlayerId, current, chosen) ?? true;
+                var shouldApply = applyOptional?.Invoke(chosenControllerId, current, chosen) ?? true;
                 if (!shouldApply)
                 {
                     appliedKeys = appliedKeys.Add(chosen.Key);
@@ -103,6 +118,20 @@ public sealed class ReplacementEngine
         }
 
         return new ReplacementResult(originalEvent, current, appliedKeys);
+    }
+
+    private static IReadOnlyList<int> GetControllerOrder(GameState state)
+    {
+        // APNAP-like: active player first, then the rest in stable order.
+        // (Deterministic and UI-friendly; avoids "player priority" in check timing.)
+        var ids = state.Players.Keys.OrderBy(id => id).ToList();
+
+        if (!ids.Contains(state.ActivePlayerId))
+            return ids;
+
+        var ordered = new List<int>(ids.Count) { state.ActivePlayerId };
+        ordered.AddRange(ids.Where(id => id != state.ActivePlayerId));
+        return ordered;
     }
 }
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Collections.Immutable;
 
 public sealed partial class GameState
@@ -55,6 +54,8 @@ public sealed partial class GameState
             zonesBuilder.Add(new ZoneId(player.Id, ZoneType.Deck), new ZoneInstance(player.Id, ZoneType.Deck));
             zonesBuilder.Add(new ZoneId(player.Id, ZoneType.Hand), new ZoneInstance(player.Id, ZoneType.Hand));
             zonesBuilder.Add(new ZoneId(player.Id, ZoneType.Stage), new ZoneInstance(player.Id, ZoneType.Stage));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.CenterStage), new ZoneInstance(player.Id, ZoneType.CenterStage));
+            zonesBuilder.Add(new ZoneId(player.Id, ZoneType.BackStage), new ZoneInstance(player.Id, ZoneType.BackStage));
             zonesBuilder.Add(new ZoneId(player.Id, ZoneType.Archive), new ZoneInstance(player.Id, ZoneType.Archive));
             zonesBuilder.Add(new ZoneId(player.Id, ZoneType.CheerDeck), new ZoneInstance(player.Id, ZoneType.CheerDeck));
             zonesBuilder.Add(new ZoneId(player.Id, ZoneType.ResolutionZone), new ZoneInstance(player.Id, ZoneType.ResolutionZone));
@@ -187,6 +188,35 @@ public sealed partial class GameState
             players: Players,
             zones: Zones,
             pendingEvents: new List<IGameEvent>().ToImmutableList());
+    }
+
+    public GameState WithPendingEvents(ImmutableList<IGameEvent> pendingEvents)
+    {
+        pendingEvents ??= ImmutableList<IGameEvent>.Empty;
+
+        if (pendingEvents == PendingEvents) return this;
+
+        return new GameState(
+            turnNumber: TurnNumber,
+            currentPhase: CurrentPhase,
+            activePlayerId: ActivePlayerId,
+            players: Players,
+            zones: Zones,
+            pendingEvents: pendingEvents);
+    }
+
+    public bool TryDequeuePendingEvent(out IGameEvent gameEvent, out GameState newState)
+    {
+        if (PendingEvents.Count == 0)
+        {
+            gameEvent = null;
+            newState = this;
+            return false;
+        }
+
+        gameEvent = PendingEvents[0];
+        newState = WithPendingEvents(PendingEvents.RemoveAt(0));
+        return true;
     }
 
     public GameStateSnapshot GetSnapshot()

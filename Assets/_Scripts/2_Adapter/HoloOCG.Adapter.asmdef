@@ -2,7 +2,9 @@
     "name": "HoloOCG.Adapter",
     "rootNamespace": "",
     "references": [
-        "GUID:02bee3907d4cf094fae0046e94dd6e7a"
+        "GUID:02bee3907d4cf094fae0046e94dd6e7a",
+        "GUID:1491147abca9d7d4bb7105af628b223e",
+        "GUID:77008c53953fb4548a55919e9d019fe9"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
